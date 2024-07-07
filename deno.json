@@ -1,0 +1,19 @@
+{
+  "name": "@denobjection/denojection",
+  "version": "0.1.0",
+  "tasks": {
+    "dev": "deno run --watch main.ts",
+    "test": "deno test tests/*"
+  },
+  "importMap": "import-map.json",
+  "exclude": [
+    "**/*.js"
+  ],
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "include": [],
+      "exclude": ["no-deprecated-deno-api"]
+    }
+  }
+}
