@@ -195,15 +195,16 @@ export function values<T = unknown>(obj: unknown): T[] {
 }
 
 export function once<T = unknown>(
+  this: any,
   func: (...args: any[]) => T,
 ): (...args: any[]) => T {
   let called = false;
   let value: T;
 
-  return function (...args: any[]): T {
+  return (...args: any[]): T => {
     if (called === false) {
       called = true;
-      value = func.apply(args);
+      value = func.apply(this, args);
     }
 
     return value;
@@ -228,7 +229,7 @@ export function flatten<T = unknown>(arrays: (T | T[])[]): T[] {
   return out;
 }
 
-export function get<T = unknown>(obj: unknown, path: string[]): T | undefined {
+export function get<T = unknown>(obj: unknown, path: Key[]): T | undefined {
   for (let i = 0, l = path.length; i < l; ++i) {
     const key = path[i];
 
@@ -236,18 +237,22 @@ export function get<T = unknown>(obj: unknown, path: string[]): T | undefined {
       return undefined;
     }
 
-    const rec = obj as GenericRecord<T>;
-    obj = rec[key];
+    if (Array.isArray(obj) && !isNaN(Number(key))) {
+      obj = obj[Number(key)];
+    } else {
+      const rec = obj as GenericRecord<T>;
+      obj = rec[key];
+    }
   }
 
   return obj as T;
 }
 
 export function set(
-  obj: GenericRecord,
-  path: (string | number)[],
+  obj: GenericRecord | unknown[],
+  path: Key[],
   value: unknown,
-): GenericRecord {
+): GenericRecord | unknown[] {
   const inputObj = obj;
   let currentValue: GenericRecord | unknown[] = obj;
 
@@ -258,8 +263,10 @@ export function set(
       return inputObj;
     }
 
-    let child: GenericRecord | unknown[] =
-      (currentValue as GenericRecord)[key] as GenericRecord | unknown[];
+    let child: GenericRecord | unknown =
+      Array.isArray(currentValue) && !isNaN(Number(key))
+        ? currentValue[Number(key)]
+        : (currentValue as GenericRecord)[key];
 
     if (!isObject(child)) {
       const nextKey = path[i + 1];
@@ -273,15 +280,15 @@ export function set(
       (currentValue as GenericRecord)[key] = child;
     }
 
-    currentValue = child;
+    currentValue = child as (GenericRecord | unknown[]);
   }
 
   if (path.length > 0 && isObject(currentValue)) {
     const key = path[path.length - 1];
 
     if (isSafeKey(key)) {
-      if (typeof key === "number") {
-        (currentValue as unknown[])[key] = value;
+      if (!isNaN(Number(key))) {
+        (currentValue as unknown[])[Number(key)] = value;
       } else {
         (currentValue as GenericRecord)[key] = value;
       }
@@ -310,6 +317,10 @@ export function zipObject<T = unknown>(
 
 export function chunk<T = unknown>(arr: T[], chunkSize: number): T[][] {
   const out: T[][] = [];
+
+  if (chunkSize <= 0) {
+    return out;
+  }
 
   for (let i = 0, l = arr.length; i < l; ++i) {
     const item = arr[i];
