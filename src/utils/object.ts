@@ -212,8 +212,7 @@ export function once<T = unknown>(
 }
 
 export function flatten<T = unknown>(arrays: (T | T[])[]): T[] {
-	// we need to go through any first or Typescript panics on infinite type recursion
-	return (arrays as any).flatten(Infinity) as T[];
+	return arrays.flat() as T[];
 }
 
 export function get<T = unknown>(obj: unknown, path: Key[]): T | undefined {
@@ -275,7 +274,8 @@ export function set(
 
 		if (isSafeKey(key)) {
 			if (!isNaN(Number(key))) {
-				(currentValue as unknown[])[Number(key)] = value;
+				// TODO: wtf about typing here?
+				(currentValue as unknown as unknown[])[Number(key)] = value;
 			} else {
 				(currentValue as GenericRecord)[key] = value;
 			}

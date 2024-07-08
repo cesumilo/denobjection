@@ -1,27 +1,27 @@
-import { nany } from "../ninja.ts";
-import { QueryBuilderContextBase } from "./QueryBuilderContextBase.ts";
+import { nany } from '../ninja.ts';
+import { QueryBuilderContextBase } from './QueryBuilderContextBase.ts';
 
 export class QueryBuilderContext extends QueryBuilderContextBase {
-  runBefore: nany[];
-  runAfter: nany[];
-  onBuild: nany[];
+	runBefore: nany[];
+	runAfter: nany[];
+	onBuild: nany[];
 
-  constructor(builder?: nany) {
-    super(builder);
+	constructor(builder?: nany) {
+		super(builder);
 
-    this.runBefore = [];
-    this.runAfter = [];
-    this.onBuild = [];
-  }
+		this.runBefore = [];
+		this.runAfter = [];
+		this.onBuild = [];
+	}
 
-  clone() {
-    const ctx = new QueryBuilderContext();
-    super.cloneInto(ctx);
+	clone() {
+		const ctx = new QueryBuilderContext();
+		super.cloneInto(ctx);
 
-    ctx.runBefore = this.runBefore.slice();
-    ctx.runAfter = this.runAfter.slice();
-    ctx.onBuild = this.onBuild.slice();
+		ctx.runBefore = this.runBefore.slice();
+		ctx.runAfter = this.runAfter.slice();
+		ctx.onBuild = this.onBuild.slice();
 
-    return ctx;
-  }
+		return ctx;
+	}
 }
