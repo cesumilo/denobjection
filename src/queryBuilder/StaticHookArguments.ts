@@ -1,30 +1,34 @@
-'use strict';
-
-const { asArray } = require('../utils/objectUtils');
+import { nany } from '../ninja.ts';
+import { asArray } from '../utils/object.ts';
+import { QueryBuilderOperationSupport } from './QueryBuilderOperationSupport.ts';
 
 const BUILDER_SYMBOL = Symbol();
 
-class StaticHookArguments {
-  constructor({ builder, result = null }) {
+export class StaticHookArguments {
+  [BUILDER_SYMBOL]: QueryBuilderOperationSupport<nany>;
+  result?: nany[];
+
+  constructor({ builder, result }: {
+    builder: QueryBuilderOperationSupport<nany>;
+    result?: nany;
+  }) {
     // The builder should never be accessed through the arguments.
     // Hide it as well as possible to discourage people from
     // digging it out.
-    Object.defineProperty(this, BUILDER_SYMBOL, {
-      value: builder,
-    });
-
-    Object.defineProperty(this, 'result', {
-      value: asArray(result),
-    });
+    this[BUILDER_SYMBOL] = builder;
+    this.result = asArray(result);
   }
 
-  static create(args) {
+  static create(
+    args: { builder: QueryBuilderOperationSupport<nany>; result?: nany },
+  ) {
     return new StaticHookArguments(args);
   }
 
   get asFindQuery() {
     return () => {
-      return this[BUILDER_SYMBOL].toFindQuery().clearWithGraphFetched().runAfter(asArray);
+      return this[BUILDER_SYMBOL].toFindQuery().clearWithGraphFetched()
+        .runAfter(asArray);
     };
   }
 
@@ -128,7 +132,3 @@ function getInputItems(op) {
 function hasInputItems(op) {
   return !!getInputItems(op);
 }
-
-module.exports = {
-  StaticHookArguments,
-};

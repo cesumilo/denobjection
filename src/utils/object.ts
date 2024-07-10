@@ -433,12 +433,12 @@ export function isSafeKey(key: unknown): key is string | number {
 export function mergeMaps<K = unknown, V = unknown>(
 	map1: Map<K, V>,
 	map2: Map<K, V>,
-): Map<K, V | undefined> {
-	const map = new Map<K, V | undefined>(map1);
+): Map<K, V> {
+	const map = new Map<K, V>(map1);
 
 	if (map2) {
 		for (const key of map2.keys()) {
-			map.set(key, map2.get(key));
+			map.set(key, map2.get(key) as V);
 		}
 	}
 
