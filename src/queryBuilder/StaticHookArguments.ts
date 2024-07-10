@@ -5,11 +5,11 @@ import { QueryBuilderOperationSupport } from './QueryBuilderOperationSupport.ts'
 const BUILDER_SYMBOL = Symbol();
 
 export class StaticHookArguments {
-  [BUILDER_SYMBOL]: QueryBuilderOperationSupport<nany>;
+  [BUILDER_SYMBOL]: nany; // TODO: nany is not a valid type
   result?: nany[];
 
   constructor({ builder, result }: {
-    builder: QueryBuilderOperationSupport<nany>;
+    builder: nany;
     result?: nany;
   }) {
     // The builder should never be accessed through the arguments.
@@ -20,7 +20,7 @@ export class StaticHookArguments {
   }
 
   static create(
-    args: { builder: QueryBuilderOperationSupport<nany>; result?: nany },
+    args: { builder: nany; result?: nany },
   ) {
     return new StaticHookArguments(args);
   }
@@ -83,7 +83,7 @@ export class StaticHookArguments {
   get cancelQuery() {
     const args = this;
 
-    return (cancelValue) => {
+    return (cancelValue: nany) => { // TODO: nany is not a valid type
       const builder = this[BUILDER_SYMBOL];
 
       if (cancelValue === undefined) {
@@ -101,34 +101,34 @@ export class StaticHookArguments {
   }
 }
 
-function getRelation(op) {
+function getRelation(op: nany) { // TODO: nany is not a valid type
   return op.relation;
 }
 
-function hasRelation(op) {
+function hasRelation(op: nany) {
   return !!getRelation(op);
 }
 
-function getModelOptions(op) {
+function getModelOptions(op: nany) {
   return op.modelOptions;
 }
 
-function hasModelOptions(op) {
+function hasModelOptions(op: nany) {
   return !!getModelOptions(op);
 }
 
-function getItems(op) {
+function getItems(op: nany) {
   return op.instance || (op.owner && op.owner.isModels && op.owner.modelArray);
 }
 
-function hasItems(op) {
+function hasItems(op: nany) {
   return !!getItems(op);
 }
 
-function getInputItems(op) {
+function getInputItems(op: nany) {
   return op.models || op.model;
 }
 
-function hasInputItems(op) {
+function hasInputItems(op: nany) {
   return !!getInputItems(op);
 }

@@ -25,12 +25,15 @@ export class QueryBuilderContextBase<T extends IModel> {
 	}
 
 	clone(): QueryBuilderContextBase<T> {
-		const newContext = new QueryBuilderContextBase<T>();
-		newContext.userContext = this.userContext;
-		newContext.options = this.options?.clone();
-		newContext.knex = this.knex;
-		newContext.aliasMap = this.aliasMap;
-		newContext.tableMap = this.tableMap;
-		return newContext;
+		return this.cloneInto(new QueryBuilderContextBase<T>());
+	}
+
+	cloneInto(context: QueryBuilderContextBase<T>): QueryBuilderContextBase<T> {
+		context.userContext = this.userContext;
+		context.options = this.options?.clone();
+		context.knex = this.knex;
+		context.aliasMap = this.aliasMap;
+		context.tableMap = this.tableMap;
+		return context;
 	}
 }

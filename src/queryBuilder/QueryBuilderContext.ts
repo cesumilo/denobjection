@@ -16,19 +16,15 @@ export class QueryBuilderContext<T extends IModel>
 		this.onBuild = [];
 	}
 
-	override clone() {
-		const ctx = new QueryBuilderContext<T>();
+	override clone(): QueryBuilderContext<T> {
+		return this.cloneInto(new QueryBuilderContext<T>());
+	}
 
-		ctx.userContext = this.userContext;
-		ctx.options = this.options?.clone();
-		ctx.knex = this.knex;
-		ctx.aliasMap = this.aliasMap;
-		ctx.tableMap = this.tableMap;
-
-		ctx.runBefore = this.runBefore.slice();
-		ctx.runAfter = this.runAfter.slice();
-		ctx.onBuild = this.onBuild.slice();
-
-		return ctx;
+	override cloneInto(clone: QueryBuilderContext<T>): QueryBuilderContext<T> {
+		super.cloneInto(clone);
+		clone.runBefore = this.runBefore.slice();
+		clone.runAfter = this.runAfter.slice();
+		clone.onBuild = this.onBuild.slice();
+		return clone;
 	}
 }

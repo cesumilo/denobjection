@@ -332,7 +332,7 @@ export class QueryBuilderOperationSupport<
     return this;
   }
 
-  toFindQuery() { // TODO: return QueryBuilder
+  toFindQuery(): nany { // TODO: return QueryBuilder
     const findQuery = this.clone();
     const operationsToReplace: {
       op: QueryBuilderOperation;

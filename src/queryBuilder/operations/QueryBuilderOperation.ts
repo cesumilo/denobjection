@@ -22,7 +22,7 @@ export interface HasOnBefore1 {
   onBefore1(
     builder: QueryBuilderOperationSupport<nany>,
     result: unknown,
-  ): unknown;
+  ): unknown | Promise<unknown>;
 }
 
 export interface HasOnBefore2 {
@@ -34,7 +34,7 @@ export interface HasOnBefore2 {
   onBefore2(
     builder: QueryBuilderOperationSupport<nany>,
     result: unknown,
-  ): unknown;
+  ): unknown | Promise<unknown>;
 }
 
 export interface HasOnBefore3 {
@@ -46,7 +46,7 @@ export interface HasOnBefore3 {
   onBefore3(
     builder: QueryBuilderOperationSupport<nany>,
     result: unknown,
-  ): unknown;
+  ): unknown | Promise<unknown>;
 }
 
 export interface HasOnBuild {
@@ -84,7 +84,7 @@ export interface HasOnRawResult {
   onRawResult(
     builder: QueryBuilderOperationSupport<nany>,
     rows: unknown[],
-  ): unknown[];
+  ): unknown | Promise<unknown[]>;
 }
 
 export interface HasOnAfter1 {
@@ -95,7 +95,7 @@ export interface HasOnAfter1 {
   onAfter1(
     builder: QueryBuilderOperationSupport<nany>,
     result: unknown,
-  ): unknown;
+  ): unknown | Promise<unknown>;
 }
 
 export interface HasOnAfter2 {
@@ -106,7 +106,7 @@ export interface HasOnAfter2 {
   onAfter2(
     builder: QueryBuilderOperationSupport<nany>,
     result: unknown,
-  ): unknown;
+  ): unknown | Promise<unknown>;
 }
 
 export interface HasOnAfter3 {
@@ -117,7 +117,7 @@ export interface HasOnAfter3 {
   onAfter3(
     builder: QueryBuilderOperationSupport<nany>,
     result: unknown,
-  ): unknown;
+  ): unknown | Promise<unknown>;
 }
 
 export interface HasQueryExecutor {
@@ -125,7 +125,9 @@ export interface HasQueryExecutor {
   //
   // This method can be asynchronous.
   // You should call the appropriate method on the `builder` to execute the query.
-  queryExecutor(builder: QueryBuilderOperationSupport<nany>): Promise<unknown>;
+  queryExecutor(
+    builder: QueryBuilderOperationSupport<nany>,
+  ): unknown | Promise<unknown>;
 }
 
 export interface HasOnError {
@@ -231,7 +233,10 @@ export class QueryBuilderOperation {
   // Takes a deep clone of this operation.
   clone(): QueryBuilderOperation {
     const clone = new QueryBuilderOperation(this.name, this.opt);
+    return this.cloneInto(clone);
+  }
 
+  cloneInto(clone: QueryBuilderOperation): QueryBuilderOperation {
     clone.adderHookName = this.adderHookName;
     clone.parentOperation = this.parentOperation;
 
