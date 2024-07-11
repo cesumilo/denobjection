@@ -29,5 +29,9 @@
     "include": [
       "./tests"
     ]
+  },
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "noImplicitOverride": true
   }
 }

@@ -1,30 +1,34 @@
-'use strict';
-
-const { asArray } = require('../utils/objectUtils');
+import { nany } from '../ninja.ts';
+import { asArray } from '../utils/object.ts';
+import { QueryBuilderOperationSupport } from './QueryBuilderOperationSupport.ts';
 
 const BUILDER_SYMBOL = Symbol();
 
-class StaticHookArguments {
-  constructor({ builder, result = null }) {
+export class StaticHookArguments {
+  [BUILDER_SYMBOL]: nany; // TODO: nany is not a valid type
+  result?: nany[];
+
+  constructor({ builder, result }: {
+    builder: nany;
+    result?: nany;
+  }) {
     // The builder should never be accessed through the arguments.
     // Hide it as well as possible to discourage people from
     // digging it out.
-    Object.defineProperty(this, BUILDER_SYMBOL, {
-      value: builder,
-    });
-
-    Object.defineProperty(this, 'result', {
-      value: asArray(result),
-    });
+    this[BUILDER_SYMBOL] = builder;
+    this.result = asArray(result);
   }
 
-  static create(args) {
+  static create(
+    args: { builder: nany; result?: nany },
+  ) {
     return new StaticHookArguments(args);
   }
 
   get asFindQuery() {
     return () => {
-      return this[BUILDER_SYMBOL].toFindQuery().clearWithGraphFetched().runAfter(asArray);
+      return this[BUILDER_SYMBOL].toFindQuery().clearWithGraphFetched()
+        .runAfter(asArray);
     };
   }
 
@@ -79,7 +83,7 @@ class StaticHookArguments {
   get cancelQuery() {
     const args = this;
 
-    return (cancelValue) => {
+    return (cancelValue: nany) => { // TODO: nany is not a valid type
       const builder = this[BUILDER_SYMBOL];
 
       if (cancelValue === undefined) {
@@ -97,38 +101,34 @@ class StaticHookArguments {
   }
 }
 
-function getRelation(op) {
+function getRelation(op: nany) { // TODO: nany is not a valid type
   return op.relation;
 }
 
-function hasRelation(op) {
+function hasRelation(op: nany) {
   return !!getRelation(op);
 }
 
-function getModelOptions(op) {
+function getModelOptions(op: nany) {
   return op.modelOptions;
 }
 
-function hasModelOptions(op) {
+function hasModelOptions(op: nany) {
   return !!getModelOptions(op);
 }
 
-function getItems(op) {
+function getItems(op: nany) {
   return op.instance || (op.owner && op.owner.isModels && op.owner.modelArray);
 }
 
-function hasItems(op) {
+function hasItems(op: nany) {
   return !!getItems(op);
 }
 
-function getInputItems(op) {
+function getInputItems(op: nany) {
   return op.models || op.model;
 }
 
-function hasInputItems(op) {
+function hasInputItems(op: nany) {
   return !!getInputItems(op);
 }
-
-module.exports = {
-  StaticHookArguments,
-};
