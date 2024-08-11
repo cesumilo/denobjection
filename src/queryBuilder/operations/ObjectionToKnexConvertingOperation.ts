@@ -1,37 +1,46 @@
-'use strict';
-
-const { QueryBuilderOperation } = require('./QueryBuilderOperation');
-const { isPlainObject, isObject, isFunction, once } = require('../../utils/objectUtils');
-const { isKnexQueryBuilder, isKnexJoinBuilder } = require('../../utils/knexUtils');
-const { transformation } = require('../transformations');
-const getJoinBuilder = once(() => require('../JoinBuilder').JoinBuilder);
+import { HasOnAdd, QueryBuilderOperation } from './QueryBuilderOperation.ts';
+import { isFunction, isObject, isPlainObject } from '../../utils/object.ts';
+import { isKnexJoinBuilder, isKnexQueryBuilder } from '../../utils/knex.ts';
+import { transformation } from '../transformations/index.ts';
+import { JoinBuilder } from '../JoinBuilder.ts';
+import { nany } from '../../ninja.ts';
 
 // An abstract operation base class that converts all arguments from objection types
 // to knex types. For example objection query builders are converted into knex query
 // builders and objection RawBuilder instances are converted into knex Raw instances.
-class ObjectionToKnexConvertingOperation extends QueryBuilderOperation {
-  constructor(name, opt) {
+export class ObjectionToKnexConvertingOperation extends QueryBuilderOperation
+  implements HasOnAdd {
+  protected args: nany[];
+
+  constructor(name: string, opt: nany = {}) {
     super(name, opt);
-    this.args = null;
+    this.args = [];
   }
 
-  getKnexArgs(builder) {
+  getKnexArgs(builder: nany) {
     return convertArgs(this.name, builder, this.args);
   }
 
-  onAdd(builder, args) {
+  onAdd(builder: nany, args: nany[]) {
     this.args = Array.from(args);
     return shouldBeAdded(this.name, builder, this.args);
   }
 
-  clone() {
-    const clone = super.clone();
+  override clone() {
+    const clone = new ObjectionToKnexConvertingOperation(this.name, this.opt);
+    return this.cloneInto(clone);
+  }
+
+  override cloneInto(
+    clone: ObjectionToKnexConvertingOperation,
+  ): QueryBuilderOperation {
+    super.cloneInto(clone);
     clone.args = this.args;
     return clone;
   }
 }
 
-function shouldBeAdded(opName, builder, args) {
+function shouldBeAdded(opName: string, builder: nany, args: nany[]) {
   const skipUndefined = builder.internalOptions().skipUndefined;
 
   for (let i = 0, l = args.length; i < l; ++i) {
@@ -51,7 +60,7 @@ function shouldBeAdded(opName, builder, args) {
   return true;
 }
 
-function convertArgs(opName, builder, args) {
+function convertArgs(opName: string, builder: nany, args: nany[]) {
   const skipUndefined = builder.internalOptions().skipUndefined;
 
   return args.map((arg, i) => {
@@ -73,32 +82,38 @@ function convertArgs(opName, builder, args) {
   });
 }
 
-function isUndefined(item) {
+function isUndefined(item: nany) {
   return item === undefined;
 }
 
-function hasToKnexRawMethod(item) {
+function hasToKnexRawMethod(item: nany) {
   return isObject(item) && isFunction(item.toKnexRaw);
 }
 
-function convertToKnexRaw(item, builder) {
+function convertToKnexRaw(item: nany, builder: nany) {
   return item.toKnexRaw(builder);
 }
 
-function isObjectionQueryBuilderBase(item) {
+function isObjectionQueryBuilderBase(item: nany) {
   return isObject(item) && item.isObjectionQueryBuilderBase === true;
 }
 
-function convertQueryBuilderBase(item, builder) {
+function convertQueryBuilderBase(item: nany, builder: nany) {
   item = transformation.onConvertQueryBuilderBase(item, builder);
   return item.subqueryOf(builder).toKnexQuery();
 }
 
-function isArray(item) {
+function isArray(item: nany) {
   return Array.isArray(item);
 }
 
-function convertArray(arr, builder, i, opName, skipUndefined) {
+function convertArray(
+  arr: nany[],
+  builder: nany,
+  i: nany,
+  opName: string,
+  skipUndefined: boolean,
+) {
   return arr.map((item) => {
     if (item === undefined) {
       if (!skipUndefined) {
@@ -116,8 +131,8 @@ function convertArray(arr, builder, i, opName, skipUndefined) {
   });
 }
 
-function convertFunction(func, builder) {
-  return function convertedKnexArgumentFunction(...args) {
+function convertFunction(func: (...args: nany[]) => nany, builder: nany) {
+  return function convertedKnexArgumentFunction(this: any, ...args: nany[]) {
     if (isKnexQueryBuilder(this)) {
       convertQueryBuilderFunction(this, func, builder);
     } else if (isKnexJoinBuilder(this)) {
@@ -128,8 +143,14 @@ function convertFunction(func, builder) {
   };
 }
 
-function convertQueryBuilderFunction(knexQueryBuilder, func, builder) {
-  const convertedQueryBuilder = builder.constructor.forClass(builder.modelClass());
+function convertQueryBuilderFunction(
+  knexQueryBuilder: nany,
+  func: (...args: nany[]) => nany,
+  builder: nany,
+) {
+  const convertedQueryBuilder = builder.constructor.forClass(
+    builder.modelClass(),
+  );
 
   convertedQueryBuilder.isPartial(true).subqueryOf(builder);
   func.call(convertedQueryBuilder, convertedQueryBuilder);
@@ -137,8 +158,11 @@ function convertQueryBuilderFunction(knexQueryBuilder, func, builder) {
   convertedQueryBuilder.toKnexQuery(knexQueryBuilder);
 }
 
-function convertJoinBuilderFunction(knexJoinBuilder, func, builder) {
-  const JoinBuilder = getJoinBuilder();
+function convertJoinBuilderFunction(
+  knexJoinBuilder: nany,
+  func: (...args: nany[]) => nany,
+  builder: nany,
+) {
   const joinClauseBuilder = JoinBuilder.forClass(builder.modelClass());
 
   joinClauseBuilder.isPartial(true).subqueryOf(builder);
@@ -147,36 +171,44 @@ function convertJoinBuilderFunction(knexJoinBuilder, func, builder) {
   joinClauseBuilder.toKnexQuery(knexJoinBuilder);
 }
 
-function isModel(item) {
+function isModel(item: nany) {
   return isObject(item) && item.$isObjectionModel;
 }
 
-function convertModel(model) {
+function convertModel(model: nany): nany {
   return model.$toDatabaseJson();
 }
 
-function convertPlainObject(obj, builder, i, opName, skipUndefined) {
-  return Object.keys(obj).reduce((out, key) => {
-    const item = obj[key];
+function convertPlainObject(
+  obj: nany,
+  builder: nany,
+  i: nany,
+  opName: string,
+  skipUndefined: boolean,
+) {
+  return Object.keys(obj).reduce(
+    (
+      out: Record<string | number | symbol, nany>,
+      key: string | number | symbol,
+    ) => {
+      const item = obj[key];
 
-    if (item === undefined) {
-      if (!skipUndefined) {
-        throw new Error(
-          `undefined passed as a property in argument #${i} for '${opName}' operation. Call skipUndefined() method to ignore the undefined values.`,
-        );
+      if (item === undefined) {
+        if (!skipUndefined) {
+          throw new Error(
+            `undefined passed as a property in argument #${i} for '${opName}' operation. Call skipUndefined() method to ignore the undefined values.`,
+          );
+        }
+      } else if (hasToKnexRawMethod(item)) {
+        out[key] = convertToKnexRaw(item, builder);
+      } else if (isObjectionQueryBuilderBase(item)) {
+        out[key] = convertQueryBuilderBase(item, builder);
+      } else {
+        out[key] = item;
       }
-    } else if (hasToKnexRawMethod(item)) {
-      out[key] = convertToKnexRaw(item, builder);
-    } else if (isObjectionQueryBuilderBase(item)) {
-      out[key] = convertQueryBuilderBase(item, builder);
-    } else {
-      out[key] = item;
-    }
 
-    return out;
-  }, {});
+      return out;
+    },
+    {},
+  );
 }
-
-module.exports = {
-  ObjectionToKnexConvertingOperation,
-};

@@ -1,7 +1,7 @@
-'use strict';
-
-const { QueryTransformation } = require('./QueryTransformation');
-const { isMySql } = require('../../utils/knexUtils');
+import { QueryTransformation } from './QueryTransformation.ts';
+import { isMySql } from '../../utils/knex.ts';
+import { nany } from '../../ninja.ts';
+import { QueryBuilderOperationSupport } from '../QueryBuilderOperationSupport.ts';
 
 /**
  * Mysql doesn't allow queries like this:
@@ -15,8 +15,8 @@ const { isMySql } = require('../../utils/knexUtils');
  *
  *   update foo set bar = 1 where id in (select * from (select id from foo))
  */
-class WrapMysqlModifySubqueryTransformation extends QueryTransformation {
-  onConvertQueryBuilderBase(query, parentQuery) {
+export class WrapMysqlModifySubqueryTransformation extends QueryTransformation {
+  override onConvertQueryBuilderBase(query: nany, parentQuery: nany): nany {
     const knex = parentQuery.unsafeKnex();
 
     // Cannot detect anything if, for whatever reason, a knex instance
@@ -48,19 +48,18 @@ class WrapMysqlModifySubqueryTransformation extends QueryTransformation {
   }
 }
 
-function hasJoinsToTable(query, tableName) {
+export function hasJoinsToTable(query: nany, tableName: string): boolean {
   let found = false;
 
-  query.forEachOperation(query.constructor.JoinSelector, (op) => {
-    if (op.args[0] === tableName) {
-      found = true;
-      return false;
-    }
-  });
+  query.forEachOperation(
+    QueryBuilderOperationSupport.JoinSelector,
+    (op: nany) => {
+      if (op.args[0] === tableName) {
+        found = true;
+        return false;
+      }
+    },
+  );
 
   return found;
 }
-
-module.exports = {
-  WrapMysqlModifySubqueryTransformation,
-};

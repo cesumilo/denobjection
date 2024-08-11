@@ -22,10 +22,10 @@ import {
 // to to the constructor in `opt.delegate`.
 export class DelegateOperation extends QueryBuilderOperation
   implements HasAllHooks {
-  delegate: QueryBuilderOperation;
+  protected delegate: QueryBuilderOperation;
 
   constructor(
-    name: string | undefined,
+    name: string,
     opt: { delegate: QueryBuilderOperation },
   ) {
     super(name, opt);

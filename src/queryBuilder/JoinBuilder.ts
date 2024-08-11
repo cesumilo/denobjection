@@ -1,142 +1,137 @@
-'use strict';
+import { nany } from '../ninja.ts';
+import { QueryBuilderOperationSupport } from './QueryBuilderOperationSupport.ts';
+import { KnexOperation } from './operations/KnexOperation.ts';
 
-const { QueryBuilderOperationSupport } = require('./QueryBuilderOperationSupport');
-const { KnexOperation } = require('./operations/KnexOperation');
-
-class JoinBuilder extends QueryBuilderOperationSupport {
-  using(...args) {
+export class JoinBuilder extends QueryBuilderOperationSupport<nany> {
+  using(...args: nany[]) {
     return this.addOperation(new KnexOperation('using'), args);
   }
 
-  on(...args) {
+  on(...args: nany[]) {
     return this.addOperation(new KnexOperation('on'), args);
   }
 
-  orOn(...args) {
+  orOn(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOn'), args);
   }
 
-  onBetween(...args) {
+  onBetween(...args: nany[]) {
     return this.addOperation(new KnexOperation('onBetween'), args);
   }
 
-  onNotBetween(...args) {
+  onNotBetween(...args: nany[]) {
     return this.addOperation(new KnexOperation('onNotBetween'), args);
   }
 
-  orOnBetween(...args) {
+  orOnBetween(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnBetween'), args);
   }
 
-  orOnNotBetween(...args) {
+  orOnNotBetween(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnNotBetween'), args);
   }
 
-  onIn(...args) {
+  onIn(...args: nany[]) {
     return this.addOperation(new KnexOperation('onIn'), args);
   }
 
-  onNotIn(...args) {
+  onNotIn(...args: nany[]) {
     return this.addOperation(new KnexOperation('onNotIn'), args);
   }
 
-  orOnIn(...args) {
+  orOnIn(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnIn'), args);
   }
 
-  orOnNotIn(...args) {
+  orOnNotIn(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnNotIn'), args);
   }
 
-  onNull(...args) {
+  onNull(...args: nany[]) {
     return this.addOperation(new KnexOperation('onNull'), args);
   }
 
-  orOnNull(...args) {
+  orOnNull(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnNull'), args);
   }
 
-  onNotNull(...args) {
+  onNotNull(...args: nany[]) {
     return this.addOperation(new KnexOperation('onNotNull'), args);
   }
 
-  orOnNotNull(...args) {
+  orOnNotNull(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnNotNull'), args);
   }
 
-  onExists(...args) {
+  onExists(...args: nany[]) {
     return this.addOperation(new KnexOperation('onExists'), args);
   }
 
-  orOnExists(...args) {
+  orOnExists(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnExists'), args);
   }
 
-  onNotExists(...args) {
+  onNotExists(...args: nany[]) {
     return this.addOperation(new KnexOperation('onNotExists'), args);
   }
 
-  orOnNotExists(...args) {
+  orOnNotExists(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnNotExists'), args);
   }
 
-  type(...args) {
+  type(...args: nany[]) {
     return this.addOperation(new KnexOperation('type'), args);
   }
 
-  andOn(...args) {
+  andOn(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOn'), args);
   }
 
-  andOnIn(...args) {
+  andOnIn(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnIn'), args);
   }
 
-  andOnNotIn(...args) {
+  andOnNotIn(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnNotIn'), args);
   }
 
-  andOnNull(...args) {
+  andOnNull(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnNull'), args);
   }
 
-  andOnNotNull(...args) {
+  andOnNotNull(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnNotNull'), args);
   }
 
-  andOnExists(...args) {
+  andOnExists(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnExists'), args);
   }
 
-  andOnNotExists(...args) {
+  andOnNotExists(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnNotExists'), args);
   }
 
-  andOnBetween(...args) {
+  andOnBetween(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnBetween'), args);
   }
 
-  andOnNotBetween(...args) {
+  andOnNotBetween(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnNotBetween'), args);
   }
 
-  andOnJsonPathEquals(...args) {
+  andOnJsonPathEquals(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnJsonPathEquals'), args);
   }
 
-  onVal(...args) {
+  onVal(...args: nany[]) {
     return this.addOperation(new KnexOperation('onVal'), args);
   }
 
-  andOnVal(...args) {
+  andOnVal(...args: nany[]) {
     return this.addOperation(new KnexOperation('andOnVal'), args);
   }
 
-  orOnVal(...args) {
+  orOnVal(...args: nany[]) {
     return this.addOperation(new KnexOperation('orOnVal'), args);
   }
 }
-
-module.exports = {
-  JoinBuilder,
-};

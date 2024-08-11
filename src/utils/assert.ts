@@ -1,6 +1,6 @@
-'use strict';
+import { nany } from '../ninja.ts';
 
-function assertHasId(model) {
+export function assertHasId(model: nany) {
   if (!model.$hasId()) {
     const modelClass = model.constructor;
     const ids = modelClass.getIdColumnArray().join(', ');
@@ -11,15 +11,10 @@ function assertHasId(model) {
   }
 }
 
-function assertIdNotUndefined(id, message) {
+export function assertIdNotUndefined(id: nany, message: string) {
   if (Array.isArray(id)) {
     id.forEach((id) => assertIdNotUndefined(id, message));
   } else if (id === undefined) {
     throw Error(message);
   }
 }
-
-module.exports = {
-  assertHasId,
-  assertIdNotUndefined,
-};

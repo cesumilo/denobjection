@@ -12,7 +12,7 @@ export class RawBuilder {
 	#args: nany[];
 	#as?: string;
 
-	constructor(sql: string, args: nany[]) {
+	constructor(sql: string, ...args: nany[]) {
 		this.#sql = `${sql}`;
 		this.#args = args;
 	}

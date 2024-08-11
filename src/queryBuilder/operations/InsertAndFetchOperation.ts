@@ -1,12 +1,13 @@
-'use strict';
+import { InsertOperation } from './InsertOperation.ts';
+import { DelegateOperation } from './DelegateOperation.ts';
+import { keyByProps } from '../../model/modelUtils.ts';
+import { asArray } from '../../utils/object.ts';
+import { nany } from '../../ninja.ts';
+import { HasOnAfter2 } from './QueryBuilderOperation.ts';
 
-const { InsertOperation } = require('./InsertOperation');
-const { DelegateOperation } = require('./DelegateOperation');
-const { keyByProps } = require('../../model/modelUtils');
-const { asArray } = require('../../utils/objectUtils');
-
-class InsertAndFetchOperation extends DelegateOperation {
-  constructor(name, opt) {
+export class InsertAndFetchOperation extends DelegateOperation
+  implements HasOnAfter2 {
+  constructor(name: string, opt: nany) {
     super(name, opt);
 
     if (!this.delegate.is(InsertOperation)) {
@@ -15,10 +16,10 @@ class InsertAndFetchOperation extends DelegateOperation {
   }
 
   get models() {
-    return this.delegate.models;
+    return (this.delegate as InsertOperation).models;
   }
 
-  async onAfter2(builder, inserted) {
+  override async onAfter2(builder: nany, inserted: nany) {
     const modelClass = builder.modelClass();
     const insertedModels = await super.onAfter2(builder, inserted);
 
@@ -43,7 +44,3 @@ class InsertAndFetchOperation extends DelegateOperation {
     return insertedModels;
   }
 }
-
-module.exports = {
-  InsertAndFetchOperation,
-};

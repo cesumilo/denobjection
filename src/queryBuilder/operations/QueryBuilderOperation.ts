@@ -69,9 +69,9 @@ export interface HasOnBuildKnex {
   // This method should never call any methods that add operations to the builder.
   // This method should always return the knex query builder.
   onBuildKnex(
-    knexBuilder: knex.QueryBuilder,
+    knexBuilder: knex.Knex.QueryBuilder<any, any[]>,
     builder: QueryBuilderOperationSupport<nany>,
-  ): knex.QueryBuilder;
+  ): knex.Knex.QueryBuilder<any, any[]>;
 }
 
 export interface HasOnRawResult {
@@ -192,7 +192,7 @@ export type HasOneOfHooks =
 // a builder has 5 operations, onBefore1 hook is called for each of them (and their results are awaited)
 // before onBefore2 hook is called for any of the operations.
 export class QueryBuilderOperation {
-  name?: string;
+  name: string;
   opt: nany;
   // From which hook was this operation added as a child operation.
   adderHookName?: keyof HasAllHooks;
@@ -201,13 +201,15 @@ export class QueryBuilderOperation {
   // Operations this operation added in any of its hooks.
   childOperations: QueryBuilderOperation[];
 
-  constructor(name: undefined | string = undefined, opt = {}) {
+  constructor(name: string, opt = {}) {
     this.name = name;
     this.opt = opt;
     this.childOperations = [];
   }
 
-  is<T extends QueryBuilderOperation>(opClass: Function): this is T {
+  is<T extends QueryBuilderOperation>(
+    opClass: typeof QueryBuilderOperation,
+  ): this is T {
     return this instanceof opClass;
   }
 

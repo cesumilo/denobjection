@@ -7,7 +7,7 @@ import { IModel } from './QueryBuilderOperationSupport.ts';
 import { nany } from '../ninja.ts';
 import { Knex } from 'knex';
 
-class ReferenceBuilder<T extends IModel> {
+export class ReferenceBuilder<T extends IModel> {
   #expr: string;
   #parsedExpr?: ParsedExpression;
   #column?: string;

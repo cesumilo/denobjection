@@ -1,16 +1,24 @@
-'use strict';
+import {
+  HasOnAfter3,
+  HasOnBefore2,
+  QueryBuilderOperation,
+} from './QueryBuilderOperation.ts';
+import { StaticHookArguments } from '../StaticHookArguments.ts';
+import {
+  after,
+  afterReturn,
+  isPromise,
+} from '../../utils/promiseUtils/index.ts';
+import { isObject } from '../../utils/object.ts';
+import { nany } from '../../ninja.ts';
 
-const { QueryBuilderOperation } = require('./QueryBuilderOperation');
-const { StaticHookArguments } = require('../StaticHookArguments');
-const { isPromise, after, afterReturn } = require('../../utils/promiseUtils');
-const { isObject } = require('../../utils/objectUtils');
-
-class FindOperation extends QueryBuilderOperation {
-  onBefore2(builder, result) {
+export class FindOperation extends QueryBuilderOperation
+  implements HasOnBefore2, HasOnAfter3 {
+  onBefore2(builder: nany, result: nany) {
     return afterReturn(callStaticBeforeFind(builder), result);
   }
 
-  onAfter3(builder, results) {
+  onAfter3(builder: nany, results: nany) {
     const opt = builder.findOptions();
 
     if (opt.dontCallFindHooks) {
@@ -21,19 +29,23 @@ class FindOperation extends QueryBuilderOperation {
   }
 }
 
-function callStaticBeforeFind(builder) {
+function callStaticBeforeFind(builder: nany) {
   const args = StaticHookArguments.create({ builder });
   return builder.modelClass().beforeFind(args);
 }
 
-function callAfterFind(builder, result) {
+function callAfterFind(builder: nany, result: nany) {
   const opt = builder.findOptions();
-  const maybePromise = callInstanceAfterFind(builder.context(), result, opt.callAfterFindDeeply);
+  const maybePromise = callInstanceAfterFind(
+    builder.context(),
+    result,
+    opt.callAfterFindDeeply,
+  );
 
   return after(maybePromise, () => callStaticAfterFind(builder, result));
 }
 
-function callStaticAfterFind(builder, result) {
+function callStaticAfterFind(builder: nany, result: nany) {
   const args = StaticHookArguments.create({ builder, result });
   const maybePromise = builder.modelClass().afterFind(args);
 
@@ -46,7 +58,7 @@ function callStaticAfterFind(builder, result) {
   });
 }
 
-function callInstanceAfterFind(ctx, results, deep) {
+function callInstanceAfterFind(ctx: nany, results: nany, deep: nany) {
   if (Array.isArray(results)) {
     if (results.length === 1) {
       return callAfterFindForOne(ctx, results[0], results, deep);
@@ -58,7 +70,7 @@ function callInstanceAfterFind(ctx, results, deep) {
   }
 }
 
-function callAfterFindArray(ctx, results, deep) {
+function callAfterFindArray(ctx: nany, results: nany, deep: nany) {
   if (results.length === 0 || !isObject(results[0])) {
     return results;
   }
@@ -81,13 +93,13 @@ function callAfterFindArray(ctx, results, deep) {
   }
 }
 
-function callAfterFindForOne(ctx, model, result, deep) {
+function callAfterFindForOne(ctx: nany, model: nany, result: nany, deep: nany) {
   if (!isObject(model) || !model.$isObjectionModel) {
     return result;
   }
 
   if (deep) {
-    const results = [];
+    const results: nany = [];
     const containsPromise = callAfterFindForRelations(ctx, model, results);
 
     if (containsPromise) {
@@ -102,7 +114,7 @@ function callAfterFindForOne(ctx, model, result, deep) {
   }
 }
 
-function callAfterFindForRelations(ctx, model, results) {
+function callAfterFindForRelations(ctx: nany, model: nany, results: nany) {
   const keys = Object.keys(model);
   let containsPromise = false;
 
@@ -124,18 +136,18 @@ function callAfterFindForRelations(ctx, model, results) {
   return containsPromise;
 }
 
-function isRelation(value) {
+function isRelation(value: nany) {
   return (
     (isObject(value) && value.$isObjectionModel) ||
     (isNonEmptyObjectArray(value) && value[0].$isObjectionModel)
   );
 }
 
-function isNonEmptyObjectArray(value) {
+function isNonEmptyObjectArray(value: nany) {
   return Array.isArray(value) && value.length > 0 && isObject(value[0]);
 }
 
-function doCallAfterFind(ctx, model, result) {
+function doCallAfterFind(ctx: nany, model: nany, result: nany) {
   const afterFind = getAfterFindHook(model);
 
   if (afterFind !== null) {
@@ -151,14 +163,10 @@ function doCallAfterFind(ctx, model, result) {
   }
 }
 
-function getAfterFindHook(model) {
+function getAfterFindHook(model: nany) {
   if (model.$afterFind !== model.$objectionModelClass.prototype.$afterFind) {
     return model.$afterFind;
   } else {
     return null;
   }
 }
-
-module.exports = {
-  FindOperation,
-};

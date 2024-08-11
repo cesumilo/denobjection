@@ -1,15 +1,6 @@
-import { isPromise } from './isPromise.ts';
-import { after } from './after.ts';
-import { afterReturn } from './afterReturn.ts';
-import { mapAfterAllReturn } from './mapAfterAllReturn.ts';
-import { promiseMap } from './map.ts';
-import { promiseTry } from './try.ts';
-
-export default {
-	isPromise,
-	after,
-	afterReturn,
-	mapAfterAllReturn,
-	map: promiseMap,
-	try: promiseTry,
-};
+export { isPromise } from './isPromise.ts';
+export { after } from './after.ts';
+export { afterReturn } from './afterReturn.ts';
+export { mapAfterAllReturn } from './mapAfterAllReturn.ts';
+export { promiseMap } from './map.ts';
+export { promiseTry } from './try.ts';

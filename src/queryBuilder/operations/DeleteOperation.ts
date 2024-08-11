@@ -1,19 +1,19 @@
-'use strict';
+import { QueryBuilderOperation } from './QueryBuilderOperation.ts';
+import { StaticHookArguments } from '../StaticHookArguments.ts';
+import knex from 'knex';
+import { nany } from '../../ninja.ts';
 
-const { QueryBuilderOperation } = require('./QueryBuilderOperation');
-const { StaticHookArguments } = require('../StaticHookArguments');
-
-class DeleteOperation extends QueryBuilderOperation {
-  async onBefore2(builder, result) {
+export class DeleteOperation extends QueryBuilderOperation {
+  async onBefore2(builder: nany, result: nany) {
     await callBeforeDelete(builder);
     return result;
   }
 
-  onBuildKnex(knexBuilder) {
+  onBuildKnex(knexBuilder: knex.Knex) {
     return knexBuilder.delete();
   }
 
-  onAfter2(builder, result) {
+  onAfter2(builder: nany, result: nany) {
     return callAfterDelete(builder, result);
   }
 
@@ -22,20 +22,20 @@ class DeleteOperation extends QueryBuilderOperation {
   }
 }
 
-function callBeforeDelete(builder) {
+function callBeforeDelete(builder: nany) {
   return callStaticBeforeDelete(builder);
 }
 
-function callStaticBeforeDelete(builder) {
+function callStaticBeforeDelete(builder: nany) {
   const args = StaticHookArguments.create({ builder });
   return builder.modelClass().beforeDelete(args);
 }
 
-function callAfterDelete(builder, result) {
+function callAfterDelete(builder: nany, result: nany) {
   return callStaticAfterDelete(builder, result);
 }
 
-async function callStaticAfterDelete(builder, result) {
+async function callStaticAfterDelete(builder: nany, result: nany) {
   const args = StaticHookArguments.create({ builder, result });
   const maybeResult = await builder.modelClass().afterDelete(args);
 
@@ -45,7 +45,3 @@ async function callStaticAfterDelete(builder, result) {
     return maybeResult;
   }
 }
-
-module.exports = {
-  DeleteOperation,
-};

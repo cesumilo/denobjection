@@ -1,8 +1,10 @@
 'use strict';
 
-const hiddenProps = ['$$queryProps'];
+import { nany } from '../ninja.ts';
 
-const staticHiddenProps = [
+export const hiddenProps = ['$$queryProps'];
+
+export const staticHiddenProps = [
   '$$knex',
   '$$validator',
   '$$jsonSchema',
@@ -19,7 +21,11 @@ const staticHiddenProps = [
   '$$virtualAttributes',
 ];
 
-function defineNonEnumerableProperty(obj, prop, value) {
+export function defineNonEnumerableProperty(
+  obj: nany,
+  prop: string,
+  value: nany,
+) {
   Object.defineProperty(obj, prop, {
     enumerable: false,
     writable: true,
@@ -28,7 +34,7 @@ function defineNonEnumerableProperty(obj, prop, value) {
   });
 }
 
-function keyByProps(models, props) {
+export function keyByProps(models: nany[], props: string[]) {
   const map = new Map();
 
   for (let i = 0, l = models.length; i < l; ++i) {
@@ -38,10 +44,3 @@ function keyByProps(models, props) {
 
   return map;
 }
-
-module.exports = {
-  hiddenProps,
-  staticHiddenProps,
-  defineNonEnumerableProperty,
-  keyByProps,
-};
