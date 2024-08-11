@@ -1,5 +1,3 @@
-'use strict';
-
 const { clone } = require('./modelClone');
 const { bindKnex } = require('./modelBindKnex');
 const { validate } = require('./modelValidate');
@@ -12,14 +10,19 @@ const { values, propKey, hasProps } = require('./modelValues');
 const { defineNonEnumerableProperty } = require('./modelUtils');
 const { parseRelationsIntoModelInstances } = require('./modelParseRelations');
 const { fetchTableMetadata, tableMetadata } = require('./modelTableMetadata');
-const { asArray, isFunction, isString, asSingle } = require('../utils/objectUtils');
-const { setJson, setFast, setRelated, appendRelated, setDatabaseJson } = require('./modelSet');
+const { asArray, isFunction, isString, asSingle } = require(
+  '../utils/objectUtils',
+);
+const { setJson, setFast, setRelated, appendRelated, setDatabaseJson } =
+  require('./modelSet');
 const {
   getJsonAttributes,
   parseJsonAttributes,
   formatJsonAttributes,
 } = require('./modelJsonAttributes');
-const { columnNameToPropertyName, propertyNameToColumnName } = require('./modelColPropMap');
+const { columnNameToPropertyName, propertyNameToColumnName } = require(
+  './modelColPropMap',
+);
 
 const { raw } = require('../queryBuilder/RawBuilder');
 const { ref } = require('../queryBuilder/ReferenceBuilder');
@@ -35,14 +38,28 @@ const { RelationOwner } = require('../relations/RelationOwner');
 
 const { HasOneRelation } = require('../relations/hasOne/HasOneRelation');
 const { HasManyRelation } = require('../relations/hasMany/HasManyRelation');
-const { ManyToManyRelation } = require('../relations/manyToMany/ManyToManyRelation');
-const { BelongsToOneRelation } = require('../relations/belongsToOne/BelongsToOneRelation');
-const { HasOneThroughRelation } = require('../relations/hasOneThrough/HasOneThroughRelation');
+const { ManyToManyRelation } = require(
+  '../relations/manyToMany/ManyToManyRelation',
+);
+const { BelongsToOneRelation } = require(
+  '../relations/belongsToOne/BelongsToOneRelation',
+);
+const { HasOneThroughRelation } = require(
+  '../relations/hasOneThrough/HasOneThroughRelation',
+);
 
-const { InstanceFindOperation } = require('../queryBuilder/operations/InstanceFindOperation');
-const { InstanceInsertOperation } = require('../queryBuilder/operations/InstanceInsertOperation');
-const { InstanceUpdateOperation } = require('../queryBuilder/operations/InstanceUpdateOperation');
-const { InstanceDeleteOperation } = require('../queryBuilder/operations/InstanceDeleteOperation');
+const { InstanceFindOperation } = require(
+  '../queryBuilder/operations/InstanceFindOperation',
+);
+const { InstanceInsertOperation } = require(
+  '../queryBuilder/operations/InstanceInsertOperation',
+);
+const { InstanceUpdateOperation } = require(
+  '../queryBuilder/operations/InstanceUpdateOperation',
+);
+const { InstanceDeleteOperation } = require(
+  '../queryBuilder/operations/InstanceDeleteOperation',
+);
 
 class Model {
   get $modelClass() {
@@ -238,7 +255,9 @@ class Model {
       if (!this.hasOwnProperty('$$omitFromDatabaseJson')) {
         defineNonEnumerableProperty(this, '$$omitFromDatabaseJson', []);
       }
-      this.$$omitFromDatabaseJson = this.$$omitFromDatabaseJson.concat(asPropsArray(props));
+      this.$$omitFromDatabaseJson = this.$$omitFromDatabaseJson.concat(
+        asPropsArray(props),
+      );
       return this;
     }
   }
@@ -346,7 +365,9 @@ class Model {
     }
 
     if (!isString(tableName)) {
-      throw new Error(`Model ${this.name} must have a static property tableName`);
+      throw new Error(
+        `Model ${this.name} must have a static property tableName`,
+      );
     }
 
     return tableName;
@@ -623,7 +644,9 @@ class Model {
     const relation = this.getRelationUnsafe(name);
 
     if (!relation) {
-      throw new Error(`A model class ${this.name} doesn't have relation ${name}`);
+      throw new Error(
+        `A model class ${this.name} doesn't have relation ${name}`,
+      );
     }
 
     return relation;
@@ -667,12 +690,18 @@ class Model {
 
     visitModels(models, modelClass, (model, _, parent, relation) => {
       if (!filterConstructor || model instanceof filterConstructor) {
-        const maybePromise = traverser(model, parent, relation && relation.name);
+        const maybePromise = traverser(
+          model,
+          parent,
+          relation && relation.name,
+        );
         promises.push(maybePromise);
       }
     });
 
-    return promiseMap(promises, (it) => it, { concurrency: this.getConcurrency(this.knex()) });
+    return promiseMap(promises, (it) => it, {
+      concurrency: this.getConcurrency(this.knex()),
+    });
   }
 }
 
@@ -767,7 +796,9 @@ function instanceQuery({ instance, transaction }) {
     });
 }
 
-function relatedQuery({ modelClass, relationName, transaction, alwaysReturnArray } = {}) {
+function relatedQuery(
+  { modelClass, relationName, transaction, alwaysReturnArray } = {},
+) {
   const relation = modelClass.getRelation(relationName);
   const relatedModelClass = relation.relatedModelClass;
 
@@ -860,8 +891,12 @@ function getReadOnlyAttributesRecursively(modelClass) {
   return [
     ...getReadOnlyAttributes(Object.getPrototypeOf(modelClass)),
     ...propertyNames.filter((propName) => {
-      const desc = Object.getOwnPropertyDescriptor(modelClass.prototype, propName);
-      return (desc.get && !desc.set) || desc.writable === false || isFunction(desc.value);
+      const desc = Object.getOwnPropertyDescriptor(
+        modelClass.prototype,
+        propName,
+      );
+      return (desc.get && !desc.set) || desc.writable === false ||
+        isFunction(desc.value);
     }),
   ];
 }

@@ -4,6 +4,7 @@ import { isKnexJoinBuilder, isKnexQueryBuilder } from '../../utils/knex.ts';
 import { transformation } from '../transformations/index.ts';
 import { JoinBuilder } from '../JoinBuilder.ts';
 import { nany } from '../../ninja.ts';
+import { Knex } from 'knex';
 
 // An abstract operation base class that converts all arguments from objection types
 // to knex types. For example objection query builders are converted into knex query
@@ -110,7 +111,7 @@ function isArray(item: nany) {
 function convertArray(
   arr: nany[],
   builder: nany,
-  i: nany,
+  i: number,
   opName: string,
   skipUndefined: boolean,
 ) {
@@ -144,7 +145,7 @@ function convertFunction(func: (...args: nany[]) => nany, builder: nany) {
 }
 
 function convertQueryBuilderFunction(
-  knexQueryBuilder: nany,
+  knexQueryBuilder: Knex.QueryBuilder,
   func: (...args: nany[]) => nany,
   builder: nany,
 ) {
@@ -159,7 +160,7 @@ function convertQueryBuilderFunction(
 }
 
 function convertJoinBuilderFunction(
-  knexJoinBuilder: nany,
+  knexJoinBuilder: Knex.QueryBuilder,
   func: (...args: nany[]) => nany,
   builder: nany,
 ) {
@@ -182,7 +183,7 @@ function convertModel(model: nany): nany {
 function convertPlainObject(
   obj: nany,
   builder: nany,
-  i: nany,
+  i: number,
   opName: string,
   skipUndefined: boolean,
 ) {

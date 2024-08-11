@@ -69,9 +69,9 @@ export interface HasOnBuildKnex {
   // This method should never call any methods that add operations to the builder.
   // This method should always return the knex query builder.
   onBuildKnex(
-    knexBuilder: knex.Knex.QueryBuilder<any, any[]>,
+    knexBuilder: knex.Knex.QueryBuilder,
     builder: QueryBuilderOperationSupport<nany>,
-  ): knex.Knex.QueryBuilder<any, any[]>;
+  ): knex.Knex.QueryBuilder;
 }
 
 export interface HasOnRawResult {
