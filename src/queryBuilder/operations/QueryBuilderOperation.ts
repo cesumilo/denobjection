@@ -1,4 +1,6 @@
 import { nany } from '../../ninja.ts';
+import { Class } from '../../types/Class.ts';
+import { enumerableProperty } from '../../utils/decorators/enumerable.ts';
 import { QueryBuilderOperationSupport } from '../QueryBuilderOperationSupport.ts';
 import { knex } from 'knex';
 
@@ -192,6 +194,9 @@ export type HasOneOfHooks =
 // a builder has 5 operations, onBefore1 hook is called for each of them (and their results are awaited)
 // before onBefore2 hook is called for any of the operations.
 export class QueryBuilderOperation {
+  @enumerableProperty(false)
+  static isQueryBuilderOperation = true;
+
   name: string;
   opt: nany;
   // From which hook was this operation added as a child operation.
@@ -208,7 +213,7 @@ export class QueryBuilderOperation {
   }
 
   is<T extends QueryBuilderOperation>(
-    opClass: typeof QueryBuilderOperation,
+    opClass: Class<T>,
   ): this is T {
     return this instanceof opClass;
   }

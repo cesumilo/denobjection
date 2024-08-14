@@ -13,7 +13,7 @@ export class MergeOperation extends QueryBuilderOperation
   model?: nany;
   args?: nany;
 
-  constructor(name: string, opt: nany) {
+  constructor(name: string, opt: nany = {}) {
     super(name, opt);
   }
 

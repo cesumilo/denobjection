@@ -15,7 +15,7 @@ export class SelectOperation extends ObjectionToKnexConvertingOperation
   implements HasOnAdd, HasOnBuildKnex {
   private selections: nany[];
 
-  constructor(name: string, opt: nany) {
+  constructor(name: string, opt: nany = {}) {
     super(name, opt);
     this.selections = [];
   }

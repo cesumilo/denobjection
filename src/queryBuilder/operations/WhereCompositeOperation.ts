@@ -4,10 +4,7 @@ import { HasOnBuildKnex } from './QueryBuilderOperation.ts';
 import { Knex } from 'knex';
 import { nany } from '../../ninja.ts';
 import { ComparisonOperator } from '../../types/ComparaisonOperator.ts';
-
-// deno-lint-ignore no-explicit-any
-type Value<T = any> = Knex.DbColumn<T> | null;
-type Column = string | number | symbol;
+import { Column, Value } from '../../types/Knex.ts';
 
 export class WhereCompositeOperation extends ObjectionToKnexConvertingOperation
   implements HasOnBuildKnex {

@@ -14,3 +14,16 @@ export function enumerable(
     descriptor.enumerable = value;
   };
 }
+
+export function enumerableProperty(
+  value: boolean,
+): (target: any, propertyKey: string) => void {
+  return function (
+    target: any,
+    propertyKey: string,
+  ) {
+    Object.defineProperty(target, propertyKey, {
+      enumerable: value,
+    });
+  };
+}

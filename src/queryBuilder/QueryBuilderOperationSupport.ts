@@ -16,6 +16,7 @@ import {
   HasToFindOperation,
   QueryBuilderOperation,
 } from './operations/QueryBuilderOperation.ts';
+import { Class } from '../types/Class.ts';
 
 const AllSelector: OperationSelector = () => true;
 const SelectSelector: OperationSelector =
@@ -34,7 +35,7 @@ export type OperationSelector =
   | boolean
   | string
   | RegExp
-  | QueryBuilderOperation
+  | Class<QueryBuilderOperation>
   | ((op: QueryBuilderOperation) => boolean);
 
 export class QueryBuilderOperationSupport<
@@ -42,7 +43,6 @@ export class QueryBuilderOperationSupport<
 > {
   #modelClass: T;
   #operations: QueryBuilderOperation[];
-  #context: QueryBuilderContextBase<T>;
   #parentQuery?: QueryBuilderOperationSupport<nany>;
   #isPartialQuery: boolean;
   #activeOperations: {
@@ -50,10 +50,12 @@ export class QueryBuilderOperationSupport<
     hookName: keyof HasAllHooks;
   }[];
 
+  protected _context: QueryBuilderContextBase<T>;
+
   constructor(modelClass: T) {
     this.#modelClass = modelClass;
     this.#operations = [];
-    this.#context = new QueryBuilderOperationSupport.QueryBuilderContext(this);
+    this._context = new QueryBuilderOperationSupport.QueryBuilderContext(this);
     this.#isPartialQuery = false;
     this.#activeOperations = [];
   }
@@ -107,7 +109,7 @@ export class QueryBuilderOperationSupport<
   context(
     obj?: QueryBuilderUserContext<T>,
   ): QueryBuilderUserContext<T> | undefined | this {
-    const ctx = this.#context;
+    const ctx = this._context;
 
     if (!obj) {
       return ctx.userContext;
@@ -118,7 +120,7 @@ export class QueryBuilderOperationSupport<
   }
 
   clearContext() {
-    const ctx = this.#context;
+    const ctx = this._context;
     ctx.userContext = new QueryBuilderOperationSupport.QueryBuilderUserContext(
       this,
     );
@@ -131,9 +133,9 @@ export class QueryBuilderOperationSupport<
     ctx?: QueryBuilderContextBase<T>,
   ): QueryBuilderContextBase<T> | this {
     if (!ctx) {
-      return this.#context;
+      return this._context;
     } else {
-      this.#context = ctx;
+      this._context = ctx;
       return this;
     }
   }
@@ -144,10 +146,10 @@ export class QueryBuilderOperationSupport<
     opt?: InternalOptions,
   ): InternalOptions | undefined | this {
     if (!opt) {
-      return this.#context.options;
+      return this._context.options;
     } else {
-      const oldOpt = this.#context.options;
-      this.#context.options = Object.assign(oldOpt ?? {}, opt);
+      const oldOpt = this._context.options;
+      this._context.options = Object.assign(oldOpt ?? {}, opt);
       return this;
     }
   }
@@ -305,13 +307,13 @@ export class QueryBuilderOperationSupport<
 
       return knex;
     } else {
-      this.#context.knex = instance;
+      this._context.knex = instance;
       return this;
     }
   }
 
   unsafeKnex(): Knex | undefined {
-    return this.#context.knex || this.#modelClass.knex() || undefined;
+    return this._context.knex || this.#modelClass.knex() || undefined;
   }
 
   clear(operationSelector: OperationSelector): this {
@@ -332,7 +334,7 @@ export class QueryBuilderOperationSupport<
     return this;
   }
 
-  toFindQuery(): nany { // TODO: return QueryBuilder
+  toFindQuery(): QueryBuilderOperationSupport<T> {
     const findQuery = this.clone();
     const operationsToReplace: {
       op: QueryBuilderOperation;
@@ -596,7 +598,7 @@ export class QueryBuilderOperationSupport<
   baseCloneInto(builder: QueryBuilderOperationSupport<T>) {
     builder.#modelClass = this.#modelClass;
     builder.#operations = this.#operations.map((it) => it.clone());
-    builder.#context = this.#context.clone();
+    builder._context = this._context.clone();
     builder.#parentQuery = this.#parentQuery;
     builder.#isPartialQuery = this.#isPartialQuery;
 
@@ -668,9 +670,11 @@ function buildFunctionForOperationSelector(
     return (op: QueryBuilderOperation) => op.name === operationSelector;
   } else if (
     isFunction(operationSelector) &&
-    operationSelector instanceof QueryBuilderOperation
+    'isQueryBuilderOperation' in operationSelector
   ) {
-    return (op: QueryBuilderOperation) => op.is(operationSelector);
+    return (op: QueryBuilderOperation) =>
+      // deno-lint-ignore no-explicit-any
+      op.is(operationSelector as Class<any>);
   } else if (isFunction(operationSelector)) {
     return operationSelector as (op: QueryBuilderOperation) => boolean;
   } else {
