@@ -1,12 +1,11 @@
-'use strict';
-
-const { isObject } = require('./objectUtils');
+// deno-lint-ignore-file no-explicit-any
+import { isObject } from './object.ts';
 
 // Super fast memoize for single argument functions.
-function memoize(func) {
+function memoize(func: (arg0: any) => any) {
   const cache = new Map();
 
-  return (input) => {
+  return (input: any) => {
     let output = cache.get(input);
 
     if (output === undefined) {
@@ -22,7 +21,7 @@ function memoize(func) {
 // This is needed especially so that aliases containing the `:` character,
 // objection uses internally, work.
 function snakeCase(
-  str,
+  str: string,
   {
     upperCase = false,
     underscoreBeforeDigits = false,
@@ -59,8 +58,8 @@ function snakeCase(
     // Test if `char` is an upper-case character and that the character
     // actually has different upper and lower case versions.
     if (char === upperChar && upperChar !== lowerChar) {
-      const prevCharacterIsUppercase =
-        prevChar === prevUpperChar && prevUpperChar !== prevLowerChar;
+      const prevCharacterIsUppercase = prevChar === prevUpperChar &&
+        prevUpperChar !== prevLowerChar;
 
       // If underscoreBetweenUppercaseLetters is true, we always place an underscore
       // before consecutive uppercase letters (e.g. "fooBAR" becomes "foo_b_a_r").

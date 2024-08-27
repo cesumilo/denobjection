@@ -20,7 +20,7 @@ const keywords = [
   return c;
 }, {});
 
-function fn(...argsIn: [string, ...nany[]]) {
+export function fn(...argsIn: [string, ...nany[]]) {
   const { sql, args } = normalizeRawArgs(argsIn);
   return new FunctionBuilder(`${sql}(${args.map(() => '?').join(', ')})`, args);
 }

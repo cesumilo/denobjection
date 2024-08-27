@@ -1,18 +1,20 @@
-'use strict';
+import { asArray, get, isObject, set, uniqBy } from '../utils/object.ts';
+import { ref as createRef } from '../queryBuilder/ReferenceBuilder.ts';
+import { PROP_KEY_PREFIX, propToStr } from '../model/modelValues.ts';
+import { Model } from '../model/Model.ts';
+import { ReferenceBuilder } from '../queryBuilder/ReferenceBuilder.ts';
 
-const { asArray, isObject, uniqBy, get, set } = require('../utils/objectUtils');
-const { ref: createRef } = require('../queryBuilder/ReferenceBuilder');
-const { propToStr, PROP_KEY_PREFIX } = require('../model/modelValues');
+export class ModelNotFoundError extends Error {
+  private tableName: string;
 
-class ModelNotFoundError extends Error {
-  constructor(tableName) {
+  constructor(tableName: string) {
     super();
     this.name = this.constructor.name;
     this.tableName = tableName;
   }
 }
 
-class InvalidReferenceError extends Error {
+export class InvalidReferenceError extends Error {
   constructor() {
     super();
     this.name = this.constructor.name;
@@ -31,7 +33,12 @@ class RelationProperty {
   //
   // modelClassResolver must be a function that takes a table name
   // and returns a model class.
-  constructor(references, modelClassResolver) {
+  protected _modelClass: typeof Model;
+
+  constructor(
+    references: string | string[],
+    modelClassResolver: (tableName: string) => typeof Model,
+  ) {
     const refs = createRefs(asArray(references));
     const paths = createPaths(refs, modelClassResolver);
     const modelClass = resolveModelClass(paths);
@@ -168,21 +175,26 @@ class RelationProperty {
   }
 }
 
-function createRefs(refs) {
+// deno-lint-ignore no-explicit-any
+function createRefs(refs: (string | ReferenceBuilder<any>)[]) {
   try {
     return refs.map((it) => {
-      if (!isObject(it) || !it.isObjectionReferenceBuilder) {
+      if (!isObject(it) || !(it instanceof ReferenceBuilder)) {
         return createRef(it);
       } else {
         return it;
       }
     });
-  } catch (err) {
+  } catch (_err) {
     throw new InvalidReferenceError();
   }
 }
 
-function createPaths(refs, modelClassResolver) {
+function createPaths(
+  // deno-lint-ignore no-explicit-any
+  refs: ReferenceBuilder<any>[],
+  modelClassResolver: (tableName: string) => typeof Model,
+) {
   return refs.map((ref) => {
     if (!ref.tableName) {
       throw new InvalidReferenceError();
@@ -195,7 +207,7 @@ function createPaths(refs, modelClassResolver) {
     }
 
     const prop = modelClass.columnNameToPropertyName(ref.column);
-    const jsonPath = ref.parsedExpr.access.map((it) => it.ref);
+    const jsonPath = ref.parsedExpr?.access.map((it) => it.ref); // TODO why it can be undefined?
 
     return {
       path: [prop].concat(jsonPath),
