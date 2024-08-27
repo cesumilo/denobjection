@@ -6,18 +6,19 @@
 // const { hasId, getSetId } = require('./modelId');
 // const { map: promiseMap } = require('../utils/promiseUtils');
 // const { toJson, toDatabaseJson } = require('./modelToJson');
-// const { values, propKey, hasProps } = require('./modelValues');
+import { hasProps } from './modelValues.ts';
 // const { defineNonEnumerableProperty } = require('./modelUtils');
 // const { parseRelationsIntoModelInstances } = require('./modelParseRelations');
 // const { fetchTableMetadata, tableMetadata } = require('./modelTableMetadata');
 import { asArray, asSingle, isFunction, isString } from '../utils/object.ts';
 // const { setJson, setFast, setRelated, appendRelated, setDatabaseJson } =
 //   require('./modelSet');
-// const {
-//   getJsonAttributes,
-//   parseJsonAttributes,
-//   formatJsonAttributes,
-// } = require('./modelJsonAttributes');
+import {
+  formatJsonAttributes,
+  getJsonAttributes,
+  parseJsonAttributes,
+} from './modelJsonAttributes.ts';
+import { columnNameToPropertyName } from './modelColPropMap.ts';
 // const { columnNameToPropertyName, propertyNameToColumnName } = require(
 //   './modelColPropMap',
 // );
@@ -25,6 +26,9 @@ import { asArray, asSingle, isFunction, isString } from '../utils/object.ts';
 import { raw } from '../queryBuilder/RawBuilder.ts';
 import { ref } from '../queryBuilder/ReferenceBuilder.ts';
 import { fn } from '../queryBuilder/FunctionBuilder.ts';
+import { enumerableProperty } from '../utils/decorators/enumerable.ts';
+import { nany } from '../ninja.ts';
+import { RelationProperty } from '../relations/RelationProperty.ts';
 
 // const { AjvValidator } = require('./AjvValidator');
 // const { QueryBuilder } = require('../queryBuilder/QueryBuilder');
@@ -59,12 +63,35 @@ import { fn } from '../queryBuilder/FunctionBuilder.ts';
 //   '../queryBuilder/operations/InstanceDeleteOperation',
 // );
 
+interface ColumnNameMapper {
+  parse(json: Record<string, unknown>): Record<string, unknown>;
+  format(json: Record<string, unknown>): Record<string, unknown>;
+}
+
 export class Model {
   static tableName: string | (() => string);
   static idColumn: string | (() => string);
+  static columnNameMappers: ColumnNameMapper | null = null;
+  static jsonAttributes: nany[] | null = null;
+  static jsonSchema: nany | null = null;
 
-  get $modelClass() {
-    return this.constructor;
+  @enumerableProperty(false)
+  private static $colToProp = new Map<string, string>();
+
+  @enumerableProperty(false)
+  private static $columnNameMappers: ColumnNameMapper | null = null;
+
+  @enumerableProperty(false)
+  private static $jsonAttributes: nany[] | null = null;
+
+  @enumerableProperty(false)
+  private static $jsonSchema: nany | null = null;
+
+  @enumerableProperty(false)
+  private static $idRelationProperty: RelationProperty | null = null;
+
+  get $modelClass(): typeof Model {
+    return this.constructor as typeof Model;
   }
 
   $id(maybeId) {
@@ -75,9 +102,9 @@ export class Model {
   //   return hasId(this);
   // }
 
-  // $hasProps(props) {
-  //   return hasProps(this, props);
-  // }
+  $hasProps(props: string[]) {
+    return hasProps(this as Record<string, unknown>, props);
+  }
 
   // $query(trx) {
   //   return instanceQuery({
@@ -112,27 +139,29 @@ export class Model {
   //   // Do nothing by default.
   // }
 
-  $parseDatabaseJson(json) {
-    const columnNameMappers = this.constructor.getColumnNameMappers();
+  $parseDatabaseJson(json: Record<string, unknown>): Record<string, unknown> {
+    const columnNameMappers = (this.constructor as typeof Model)
+      .getColumnNameMappers();
 
     if (columnNameMappers) {
       json = columnNameMappers.parse(json);
     }
 
-    return parseJsonAttributes(json, this.constructor);
+    return parseJsonAttributes(json, this.constructor as typeof Model);
   }
 
-  // $formatDatabaseJson(json) {
-  //   const columnNameMappers = this.constructor.getColumnNameMappers();
+  $formatDatabaseJson(json: Record<string, unknown>) {
+    const columnNameMappers = (this.constructor as typeof Model)
+      .getColumnNameMappers();
 
-  //   json = formatJsonAttributes(json, this.constructor);
+    json = formatJsonAttributes(json, this.constructor as typeof Model);
 
-  //   if (columnNameMappers) {
-  //     json = columnNameMappers.format(json);
-  //   }
+    if (columnNameMappers) {
+      json = columnNameMappers.format(json);
+    }
 
-  //   return json;
-  // }
+    return json;
+  }
 
   // $parseJson(json, options) {
   //   return json;
@@ -388,16 +417,25 @@ export class Model {
   //   return cachedGet(this, '$$validator', getValidator);
   // }
 
-  // static getJsonSchema() {
-  //   return cachedGet(this, '$$jsonSchema', getJsonSchema);
-  // }
+  static getJsonSchema() {
+    if (!this.$jsonSchema) {
+      this.$jsonSchema = getJsonSchema(this);
+    }
+    return this.$jsonSchema;
+  }
 
-  // static getJsonAttributes() {
-  //   return cachedGet(this, '$$jsonAttributes', getJsonAttributes);
-  // }
+  static getJsonAttributes() {
+    if (!this.$jsonAttributes) {
+      this.$jsonAttributes = getJsonAttributes(this);
+    }
+    return this.$jsonAttributes;
+  }
 
-  static getColumnNameMappers() {
-    return cachedGet(this, '$$columnNameMappers', getColumnNameMappers);
+  static getColumnNameMappers(): ColumnNameMapper | null {
+    if (!this.$columnNameMappers) {
+      this.$columnNameMappers = getColumnNameMappers(this);
+    }
+    return this.$columnNameMappers;
   }
 
   // static getConcurrency(knex) {
@@ -427,17 +465,17 @@ export class Model {
   //   return this.modifiers || {};
   // }
 
-  // static columnNameToPropertyName(columnName) {
-  //   let colToProp = cachedGet(this, '$$colToProp', () => new Map());
-  //   let propertyName = colToProp.get(columnName);
+  static columnNameToPropertyName(columnName: string): string {
+    // let colToProp = cachedGet(this, '$$colToProp', () => new Map());
+    let propertyName = this.$colToProp.get(columnName);
 
-  //   if (!propertyName) {
-  //     propertyName = columnNameToPropertyName(this, columnName);
-  //     colToProp.set(columnName, propertyName);
-  //   }
+    if (!propertyName) {
+      propertyName = columnNameToPropertyName(this, columnName);
+      this.$colToProp.set(columnName, propertyName);
+    }
 
-  //   return propertyName;
-  // }
+    return propertyName;
+  }
 
   // static propertyNameToColumnName(propertyName) {
   //   let propToCol = cachedGet(this, '$$propToCol', () => new Map());
@@ -456,7 +494,10 @@ export class Model {
   // }
 
   static getIdRelationProperty() {
-    return cachedGet(this, '$$idRelationProperty', getIdRelationProperty);
+    if (!this.$idRelationProperty) {
+      this.$idRelationProperty = getIdRelationProperty(this);
+    }
+    return this.$idRelationProperty;
   }
 
   // static getIdColumnArray() {
@@ -467,15 +508,15 @@ export class Model {
     return this.getIdRelationProperty().props;
   }
 
-  // static getIdProperty() {
-  //   const idProps = this.getIdPropertyArray();
+  static getIdProperty(): (string | number)[] | (string | number) {
+    const idProps = this.getIdPropertyArray();
 
-  //   if (idProps.length === 1) {
-  //     return idProps[0];
-  //   } else {
-  //     return idProps;
-  //   }
-  // }
+    if (idProps.length === 1) {
+      return idProps[0];
+    } else {
+      return idProps;
+    }
+  }
 
   // static getRelationMappings() {
   //   return cachedGet(this, '$$relationMappings', getRelationMappings);
@@ -860,9 +901,9 @@ export class Model {
 //   return modelClass.createValidator();
 // }
 
-// function getJsonSchema(modelClass) {
-//   return modelClass.jsonSchema;
-// }
+function getJsonSchema(modelClass: typeof Model) {
+  return modelClass.jsonSchema;
+}
 
 function getColumnNameMappers(modelClass: typeof Model) {
   return modelClass.columnNameMappers;

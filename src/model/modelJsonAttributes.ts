@@ -1,8 +1,11 @@
-'use strict';
+import { nany } from '../ninja.ts';
+import { asArray, flatten, isString } from '../utils/object.ts';
+import { Model } from './Model.ts';
 
-const { asArray, isObject, flatten, isString } = require('../utils/objectUtils');
-
-function parseJsonAttributes(json, modelClass) {
+export function parseJsonAttributes(
+  json: Record<string, unknown>,
+  modelClass: typeof Model,
+) {
   const jsonAttr = modelClass.getJsonAttributes();
 
   if (jsonAttr.length) {
@@ -26,7 +29,10 @@ function parseJsonAttributes(json, modelClass) {
   return json;
 }
 
-function formatJsonAttributes(json, modelClass) {
+export function formatJsonAttributes(
+  json: Record<string, unknown>,
+  modelClass: typeof Model,
+) {
   const jsonAttr = modelClass.getJsonAttributes();
 
   if (jsonAttr.length) {
@@ -44,7 +50,7 @@ function formatJsonAttributes(json, modelClass) {
   return json;
 }
 
-function getJsonAttributes(modelClass) {
+export function getJsonAttributes(modelClass: typeof Model) {
   let jsonAttributes = modelClass.jsonAttributes;
 
   if (Array.isArray(jsonAttributes)) {
@@ -61,11 +67,11 @@ function getJsonAttributes(modelClass) {
       let types = asArray(prop.type).filter((it) => !!it);
 
       if (types.length === 0 && Array.isArray(prop.anyOf)) {
-        types = flatten(prop.anyOf.map((it) => it.type));
+        types = flatten(prop.anyOf.map((it: nany) => it.type));
       }
 
       if (types.length === 0 && Array.isArray(prop.oneOf)) {
-        types = flatten(prop.oneOf.map((it) => it.type));
+        types = flatten(prop.oneOf.map((it: nany) => it.type));
       }
 
       if (types.indexOf('object') !== -1 || types.indexOf('array') !== -1) {
@@ -77,16 +83,10 @@ function getJsonAttributes(modelClass) {
   return jsonAttributes;
 }
 
-function tryParseJson(maybeJsonStr) {
+export function tryParseJson(maybeJsonStr: unknown) {
   try {
-    return JSON.parse(maybeJsonStr);
-  } catch (err) {
+    return JSON.parse(maybeJsonStr as string);
+  } catch (_err) {
     return undefined;
   }
 }
-
-module.exports = {
-  parseJsonAttributes,
-  formatJsonAttributes,
-  getJsonAttributes,
-};

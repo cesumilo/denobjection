@@ -3,9 +3,11 @@ import { ref as createRef } from '../queryBuilder/ReferenceBuilder.ts';
 import { PROP_KEY_PREFIX, propToStr } from '../model/modelValues.ts';
 import { Model } from '../model/Model.ts';
 import { ReferenceBuilder } from '../queryBuilder/ReferenceBuilder.ts';
+import { ParsedExpression } from '../utils/parseFieldExpression.ts';
+import { nany } from '../ninja.ts';
 
 export class ModelNotFoundError extends Error {
-  private tableName: string;
+  readonly tableName: string;
 
   constructor(tableName: string) {
     super();
@@ -27,13 +29,20 @@ export class InvalidReferenceError extends Error {
 // A relation property can be a single column, an array of columns
 // (composite key) a json column reference, an array of json column
 // references or any combination of the above.
-class RelationProperty {
+export class RelationProperty {
   // references must be a reference string like `Table.column:maybe.some.json[1].path`.
   // or an array of such references (composite key).
   //
   // modelClassResolver must be a function that takes a table name
   // and returns a model class.
   protected _modelClass: typeof Model;
+  // deno-lint-ignore no-explicit-any
+  protected _refs: ReferenceBuilder<any>[];
+  protected _props: (string | number)[];
+  protected _cols: string[];
+  protected _propGetters: ((obj: nany) => nany)[];
+  protected _propSetters: ((obj: nany, value: nany) => void)[];
+  protected _patchers: ((patch: nany, value: nany) => void)[];
 
   constructor(
     references: string | string[],
@@ -46,7 +55,7 @@ class RelationProperty {
     this._refs = refs.map((ref) => ref.model(modelClass));
     this._modelClass = modelClass;
     this._props = paths.map((it) => it.path[0]);
-    this._cols = refs.map((it) => it.column);
+    this._cols = refs.map((it) => it.column as string); // TODO: why it is undefined?
     this._propGetters = paths.map((it) => createGetter(it.path));
     this._propSetters = paths.map((it) => createSetter(it.path));
     this._patchers = refs.map((it, i) => createPatcher(it, paths[i].path));
@@ -86,14 +95,14 @@ class RelationProperty {
     return this._cols;
   }
 
-  forEach(callback) {
+  forEach(callback: (i: number) => void) {
     for (let i = 0, l = this.size; i < l; ++i) {
       callback(i);
     }
   }
 
   // Creates a concatenated string from the property values of the given object.
-  propKey(obj) {
+  propKey(obj: nany) {
     const size = this.size;
     let key = PROP_KEY_PREFIX;
 
@@ -109,7 +118,7 @@ class RelationProperty {
   }
 
   // Returns the property values of the given object as an array.
-  getProps(obj) {
+  getProps(obj: nany) {
     const size = this.size;
     const props = new Array(size);
 
@@ -121,7 +130,7 @@ class RelationProperty {
   }
 
   // Returns true if the given object has a non-null value in all properties.
-  hasProps(obj) {
+  hasProps(obj: nany) {
     const size = this.size;
 
     for (let i = 0; i < size; ++i) {
@@ -136,25 +145,25 @@ class RelationProperty {
   }
 
   // Returns the index:th property value of the given object.
-  getProp(obj, index) {
+  getProp(obj: nany, index: number) {
     return this._propGetters[index](obj);
   }
 
   // Sets the index:th property value of the given object.
-  setProp(obj, index, value) {
+  setProp(obj: nany, index: number, value: nany) {
     return this._propSetters[index](obj, value);
   }
 
   // Returns an instance of ReferenceBuilder that points to the index:th
   // value of a row.
-  ref(builder, index) {
+  ref(builder: nany, index: number) {
     const table = builder.tableRefFor(this.modelClass);
 
     return this._refs[index].clone().table(table);
   }
 
   // Returns an array of reference builders. `ref(builder, i)` for each i.
-  refs(builder) {
+  refs(builder: nany) {
     const refs = new Array(this.size);
 
     for (let i = 0, l = refs.length; i < l; ++i) {
@@ -165,12 +174,12 @@ class RelationProperty {
   }
 
   // Appends an update operation for the index:th column into `patch` object.
-  patch(patch, index, value) {
+  patch(patch: nany, index: number, value: nany) {
     return this._patchers[index](patch, value);
   }
 
   // String representation of this property's index:th column for logging.
-  propDescription(index) {
+  propDescription(index: number) {
     return this._refs[index].expression;
   }
 }
@@ -206,17 +215,21 @@ function createPaths(
       throw new ModelNotFoundError(ref.tableName);
     }
 
-    const prop = modelClass.columnNameToPropertyName(ref.column);
-    const jsonPath = ref.parsedExpr?.access.map((it) => it.ref); // TODO why it can be undefined?
+    const prop = modelClass.columnNameToPropertyName(ref.column as string); // TODO why it can be undefined?
+    const jsonPath = (ref.parsedExpr as ParsedExpression).access.map((it) =>
+      it.ref
+    ); // TODO why it can be undefined?
 
     return {
-      path: [prop].concat(jsonPath),
+      path: ([prop] as (string | number)[]).concat(jsonPath),
       modelClass,
     };
   });
 }
 
-function resolveModelClass(paths) {
+function resolveModelClass(
+  paths: { path: (string | number)[]; modelClass: typeof Model }[],
+) {
   const modelClasses = paths.map((it) => it.modelClass);
   const uniqueModelClasses = uniqBy(modelClasses);
 
@@ -227,33 +240,30 @@ function resolveModelClass(paths) {
   return modelClasses[0];
 }
 
-function createGetter(path) {
+function createGetter(path: (string | number)[]) {
   if (path.length === 1) {
     const prop = path[0];
-    return (obj) => obj[prop];
+    return (obj: nany) => obj[prop];
   } else {
-    return (obj) => get(obj, path);
+    return (obj: nany) => get(obj, path);
   }
 }
 
-function createSetter(path) {
+function createSetter(path: (string | number)[]) {
   if (path.length === 1) {
     const prop = path[0];
-    return (obj, value) => (obj[prop] = value);
+    return (obj: nany, value: nany) => (obj[prop] = value);
   } else {
-    return (obj, value) => set(obj, path, value);
+    return (obj: nany, value: nany) => set(obj, path, value);
   }
 }
 
-function createPatcher(ref, path) {
+// deno-lint-ignore no-explicit-any
+function createPatcher(ref: ReferenceBuilder<any>, path: (string | number)[]) {
   if (ref.isPlainColumnRef) {
-    return (patch, value) => (patch[path[0]] = value);
+    return (patch: nany, value: nany) => (patch[path[0]] = value);
   } else {
     // Objection `patch`, `update` etc. methods understand field expressions.
-    return (patch, value) => (patch[ref.expression] = value);
+    return (patch: nany, value: nany) => (patch[ref.expression] = value);
   }
 }
-
-module.exports = {
-  RelationProperty,
-};

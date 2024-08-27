@@ -1,12 +1,14 @@
 // deno-lint-ignore-file no-explicit-any
 // const { clone, cloneDeep } = require('./clone');
+import { Buffer } from 'buffer';
+
 const SMALL_ARRAY_SIZE = 10;
 
 export type Key = string | number | symbol;
 export type GenericRecord<T = unknown | unknown[]> = Record<Key, T>;
 
-export function isBuffer(item: unknown): item is Deno.Buffer {
-	return item instanceof Deno.Buffer;
+export function isBuffer(item: unknown): item is Buffer {
+	return item instanceof Buffer;
 }
 
 export function isEmpty(item: unknown): boolean {
@@ -466,8 +468,8 @@ export function clone<T>(value: T): T {
 		return new Set(value) as unknown as T;
 	}
 
-	if (value instanceof Deno.Buffer) {
-		return new Deno.Buffer(new Uint8Array(value.bytes())) as unknown as T;
+	if (value instanceof Buffer) {
+		return Buffer.from(new Uint8Array(value)) as unknown as T;
 	}
 
 	if (value instanceof Object) {
@@ -510,8 +512,8 @@ export function cloneDeep<T>(value: T): T {
 		return setCopy as unknown as T;
 	}
 
-	if (value instanceof Deno.Buffer) {
-		return new Deno.Buffer(new Uint8Array(value.bytes())) as unknown as T;
+	if (value instanceof Buffer) {
+		return Buffer.from(new Uint8Array(value)) as unknown as T;
 	}
 
 	if (value instanceof Object) {

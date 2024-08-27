@@ -1,5 +1,7 @@
 {
   "imports": {
-    "knex": "npm:knex@^3.1.0"
+    "knex": "npm:knex@^3.1.0",
+    "hex": "jsr:@std/encoding/hex",
+    "buffer": "jsr:@std/io/buffer"
   }
 }

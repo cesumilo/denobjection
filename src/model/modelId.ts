@@ -1,6 +1,6 @@
 import { Model } from './Model.ts';
 
-function getSetId(model: Model, maybeId) {
+function getSetId(model: Model, maybeId: unknown) {
   if (maybeId !== undefined) {
     return setId(model, maybeId);
   } else {
@@ -9,11 +9,13 @@ function getSetId(model: Model, maybeId) {
 }
 
 function hasId(model: Model) {
-  return model.$hasProps(model.constructor.getIdPropertyArray());
+  return model.$hasProps(
+    (model.constructor as typeof Model).getIdPropertyArray(),
+  );
 }
 
-function setId(model: Model, id) {
-  const idProp = model.constructor.getIdProperty();
+function setId(model: Model, id: string) {
+  const idProp = (model.constructor as typeof Model).getIdProperty();
   const isCompositeId = Array.isArray(idProp);
 
   if (Array.isArray(id)) {
